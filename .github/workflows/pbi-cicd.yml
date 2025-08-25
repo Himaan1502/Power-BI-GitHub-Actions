@@ -12,6 +12,7 @@ jobs:
       matrix:
         env: [dev, uat, prod]
     environment: ${{ matrix.env }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -21,15 +22,17 @@ jobs:
         run: |
           Install-Module -Name MicrosoftPowerBIMgmt -Force -AllowClobber -Scope CurrentUser
           Import-Module MicrosoftPowerBIMgmt
-          Import-Module MicrosoftPowerBIMgmt.Profile
-          Import-Module MicrosoftPowerBIMgmt.Reports
-          Import-Module MicrosoftPowerBIMgmt.Workspaces  
+
+      - name: Authenticate with Power BI
+        shell: pwsh
+        run: |
+          $secureSecret = ConvertTo-SecureString "${{ secrets.AZURE_CLIENT_SECRET }}" -AsPlainText -Force
+          $credential = New-Object System.Management.Automation.PSCredential ("${{ secrets.AZURE_CLIENT_ID }}", $secureSecret)
+          Connect-PowerBIServiceAccount -ServicePrincipal -Credential $credential -Tenant "${{ secrets.AZURE_TENANT_ID }}"
 
       - name: Deploy PBIX to ${{ matrix.env }}
         shell: pwsh
         run: |
           ./deploy.ps1 `
-            -WorkspaceId "${{ secrets[format('PBI_WORKSPACE_{0}', matrix.env) ] }}" `
-            -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
-            -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
-            -ClientSecret "${{ secrets.AZURE_CLIENT_SECRET }}"
+            -WorkspaceId "${{ secrets.PBI_WORKSPACE_ID }}" `
+            -Environment "${{ matrix.env }}"
