@@ -13,13 +13,17 @@ Connect-PowerBIServiceAccount -ServicePrincipal `
 
 Write-Host "Deploying PBIX files to workspace $WorkspaceId..."
 
-$pbixFiles = Get-ChildItem -Path "./reports" -Filter *.pbix
+# Adjust folder as needed ("./reports" or ".")
+$pbixFiles = Get-ChildItem -Path "./reports" -Filter *.pbix -Recurse
 
 foreach ($file in $pbixFiles) {
     Write-Host "Uploading $($file.Name)..."
 
-    # Import report into workspace
-    Import-PowerBIReport -Path $file.FullName -WorkspaceId $WorkspaceId -ConflictAction CreateOrOverwrite
+    Import-PowerBIReport `
+        -Path $file.FullName `
+        -WorkspaceId $WorkspaceId `
+        -Name $file.BaseName `
+        -ConflictAction CreateOrOverwrite
 }
 
 Write-Host "Deployment completed successfully."
