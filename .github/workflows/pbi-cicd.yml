@@ -8,6 +8,7 @@ on:
 jobs:
   deploy-dev:
     runs-on: windows-latest
+    environment: dev
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -24,6 +25,7 @@ jobs:
   deploy-uat:
     needs: deploy-dev
     runs-on: windows-latest
+    environment: uat
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -40,6 +42,7 @@ jobs:
   deploy-prod:
     needs: deploy-uat
     runs-on: windows-latest
+    environment: prod
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
