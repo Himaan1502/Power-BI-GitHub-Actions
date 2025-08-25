@@ -6,9 +6,12 @@ on:
       - main
 
 jobs:
-  deploy-dev:
+  deploy:
     runs-on: windows-latest
-    environment: dev
+    strategy:
+      matrix:
+        env: [dev, uat, prod]
+    environment: ${{ matrix.env }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -22,63 +25,11 @@ jobs:
           Import-Module MicrosoftPowerBIMgmt.Reports
           Import-Module MicrosoftPowerBIMgmt.Workspaces  
 
-      - name: Deploy PBIX to Dev
+      - name: Deploy PBIX to ${{ matrix.env }}
         shell: pwsh
         run: |
           ./deploy.ps1 `
-            -WorkspaceId "${{ secrets.PBI_WORKSPACE_DEV }}" `
-            -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
-            -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
-            -ClientSecret "${{ secrets.AZURE_CLIENT_SECRET }}"
-
-  deploy-uat:
-    needs: deploy-dev
-    runs-on: windows-latest
-    environment: uat
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Install Power BI PowerShell modules
-        shell: pwsh
-        run: |
-          Install-Module -Name MicrosoftPowerBIMgmt -Force -AllowClobber -Scope CurrentUser
-          Import-Module MicrosoftPowerBIMgmt
-          Import-Module MicrosoftPowerBIMgmt.Profile
-          Import-Module MicrosoftPowerBIMgmt.Reports
-          Import-Module MicrosoftPowerBIMgmt.Workspaces  
-
-      - name: Deploy PBIX to UAT
-        shell: pwsh
-        run: |
-          ./deploy.ps1 `
-            -WorkspaceId "${{ secrets.PBI_WORKSPACE_UAT }}" `
-            -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
-            -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
-            -ClientSecret "${{ secrets.AZURE_CLIENT_SECRET }}"
-
-  deploy-prod:
-    needs: deploy-uat
-    runs-on: windows-latest
-    environment: prod
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Install Power BI PowerShell modules
-        shell: pwsh
-        run: |
-          Install-Module -Name MicrosoftPowerBIMgmt -Force -AllowClobber -Scope CurrentUser
-          Import-Module MicrosoftPowerBIMgmt
-          Import-Module MicrosoftPowerBIMgmt.Profile
-          Import-Module MicrosoftPowerBIMgmt.Reports
-          Import-Module MicrosoftPowerBIMgmt.Workspaces  
-
-      - name: Deploy PBIX to Prod
-        shell: pwsh
-        run: |
-          ./deploy.ps1 `
-            -WorkspaceId "${{ secrets.PBI_WORKSPACE_PROD }}" `
+            -WorkspaceId "${{ secrets[format('PBI_WORKSPACE_{0}', matrix.env) ] }}" `
             -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
             -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
             -ClientSecret "${{ secrets.AZURE_CLIENT_SECRET }}"
