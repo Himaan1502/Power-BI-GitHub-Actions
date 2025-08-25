@@ -5,68 +5,56 @@ on:
     branches:
       - main
 
-env:
-  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-
 jobs:
   deploy-dev:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install PowerShell Module
-        run: |
-          Install-Module -Name MicrosoftPowerBIMgmt -Force -Scope CurrentUser -AllowClobber
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@v2
 
-      - name: Deploy to Dev Workspace
+      - name: Deploy PBIX to Dev
         run: |
           pwsh ./deploy.ps1 `
             -WorkspaceId "${{ secrets.PBI_WORKSPACE_DEV }}" `
-            -TenantId $env:AZURE_TENANT_ID `
-            -ClientId $env:AZURE_CLIENT_ID `
-            -ClientSecret $env:AZURE_CLIENT_SECRET
+            -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
+            -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
+            -ClientSecret "${{ secrets.AZURE_CLIENT_SECRET }}"
 
   deploy-uat:
     needs: deploy-dev
-    runs-on: windows-latest
-    environment:
-      name: UAT
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install PowerShell Module
-        run: |
-          Install-Module -Name MicrosoftPowerBIMgmt -Force -Scope CurrentUser -AllowClobber
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@v2
 
-      - name: Deploy to UAT Workspace
+      - name: Deploy PBIX to UAT
         run: |
           pwsh ./deploy.ps1 `
             -WorkspaceId "${{ secrets.PBI_WORKSPACE_UAT }}" `
-            -TenantId $env:AZURE_TENANT_ID `
-            -ClientId $env:AZURE_CLIENT_ID `
-            -ClientSecret $env:AZURE_CLIENT_SECRET
+            -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
+            -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
+            -ClientSecret "${{ secrets.AZURE_CLIENT_SECRET }}"
 
   deploy-prod:
     needs: deploy-uat
-    runs-on: windows-latest
-    environment:
-      name: PROD
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install PowerShell Module
-        run: |
-          Install-Module -Name MicrosoftPowerBIMgmt -Force -Scope CurrentUser -AllowClobber
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@v2
 
-      - name: Deploy to Prod Workspace
+      - name: Deploy PBIX to Prod
         run: |
           pwsh ./deploy.ps1 `
             -WorkspaceId "${{ secrets.PBI_WORKSPACE_PROD }}" `
-            -TenantId $env:AZURE_TENANT_ID `
-            -ClientId $env:AZURE_CLIENT_ID `
-            -ClientSecret $env:AZURE_CLIENT_SECRET
+            -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
+            -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
+            -ClientSecret "${{ secrets.AZURE_CLIENT_SECRET }}"
