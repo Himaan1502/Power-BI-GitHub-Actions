@@ -12,9 +12,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup PowerShell
-        uses: actions/setup-powershell@v4
-
       - name: Deploy PBIX to Dev
         run: |
           pwsh ./deploy.ps1 `
@@ -31,9 +28,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup PowerShell
-        uses: actions/setup-powershell@v4
-
       - name: Deploy PBIX to UAT
         run: |
           pwsh ./deploy.ps1 `
@@ -49,9 +43,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
-      - name: Setup PowerShell
-        uses: actions/setup-powershell@v4
 
       - name: Deploy PBIX to Prod
         run: |
