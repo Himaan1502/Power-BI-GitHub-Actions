@@ -2,12 +2,32 @@ param (
     [string]$WorkspaceId
 )
 
-Write-Host "Deploying to Workspace: $WorkspaceId"
+Write-Host "🚀 Deploying reports to Workspace: $WorkspaceId"
 
-# Example: Call Power BI REST API
-$token = az account get-access-token --resource https://analysis.windows.net/powerbi/api --query accessToken -o tsv
+# Connect to Power BI
+Connect-PowerBIServiceAccount -ServicePrincipal `
+    -Tenant $env:AZURE_TENANT_ID `
+    -ClientId $env:AZURE_CLIENT_ID `
+    -ClientSecret $env:AZURE_CLIENT_SECRET
 
-# Example to create dataset/report (replace with actual deployment logic)
-Invoke-RestMethod -Uri "https://api.powerbi.com/v1.0/myorg/groups/$WorkspaceId/reports" `
-    -Headers @{Authorization = "Bearer $token"} `
-    -Method GET
+# Path to PBIX files (change if needed)
+$pbixFiles = Get-ChildItem -Path "./reports" -Filter *.pbix
+
+foreach ($pbix in $pbixFiles) {
+    Write-Host "📤 Publishing $($pbix.Name) to workspace $WorkspaceId"
+
+    try {
+        New-PowerBIReport `
+            -Path $pbix.FullName `
+            -Name $pbix.BaseName `
+            -WorkspaceId $WorkspaceId `
+            -ConflictAction CreateOrOverwrite `
+            -ErrorAction Stop
+
+        Write-Host "✅ Successfully deployed: $($pbix.Name)"
+    }
+    catch {
+        Write-Host "❌ Failed deploying $($pbix.Name): $_"
+        exit 1
+    }
+}
