@@ -25,7 +25,7 @@ jobs:
 
   deploy-uat:
     needs: deploy-dev
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
 
   deploy-prod:
     needs: deploy-uat
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
