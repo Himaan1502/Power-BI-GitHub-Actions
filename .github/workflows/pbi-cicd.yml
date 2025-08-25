@@ -13,11 +13,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup PowerShell
-        uses: actions/setup-powershell@v2
+        uses: actions/setup-powershell@v4
 
       - name: Deploy PBIX to Dev
         run: |
           pwsh ./deploy.ps1 `
+            -ReportPath "./reports/sample-power-bi.pbix" `
             -WorkspaceId "${{ secrets.PBI_WORKSPACE_DEV }}" `
             -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
             -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
@@ -31,11 +32,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup PowerShell
-        uses: actions/setup-powershell@v2
+        uses: actions/setup-powershell@v4
 
       - name: Deploy PBIX to UAT
         run: |
           pwsh ./deploy.ps1 `
+            -ReportPath "./reports/sample-power-bi.pbix" `
             -WorkspaceId "${{ secrets.PBI_WORKSPACE_UAT }}" `
             -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
             -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
@@ -49,11 +51,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup PowerShell
-        uses: actions/setup-powershell@v2
+        uses: actions/setup-powershell@v4
 
       - name: Deploy PBIX to Prod
         run: |
           pwsh ./deploy.ps1 `
+            -ReportPath "./reports/sample-power-bi.pbix" `
             -WorkspaceId "${{ secrets.PBI_WORKSPACE_PROD }}" `
             -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
             -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
