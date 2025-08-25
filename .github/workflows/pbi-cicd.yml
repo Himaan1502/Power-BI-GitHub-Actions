@@ -1,0 +1,75 @@
+name: Power BI CI/CD Pipeline
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-dev:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Deploy to Dev Workspace
+        run: |
+          echo "Deploying reports/datasets to DEV..."
+          # Example: Publish PBIX or run REST API
+          pwsh ./scripts/deploy.ps1 -WorkspaceId "${{ secrets.PBI_WORKSPACE_DEV }}"
+
+  deploy-uat:
+    name: Deploy to UAT
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    environment:
+      name: UAT
+      url: https://app.powerbi.com/groups/${{ secrets.PBI_WORKSPACE_UAT }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Deploy to UAT Workspace
+        run: |
+          echo "Deploying reports/datasets to UAT..."
+          pwsh ./scripts/deploy.ps1 -WorkspaceId "${{ secrets.PBI_WORKSPACE_UAT }}"
+
+  deploy-prod:
+    name: Deploy to Prod
+    needs: deploy-uat
+    runs-on: ubuntu-latest
+    environment:
+      name: Prod
+      url: https://app.powerbi.com/groups/${{ secrets.PBI_WORKSPACE_PROD }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Deploy to Prod Workspace
+        run: |
+          echo "Deploying reports/datasets to PROD..."
+          pwsh ./scripts/deploy.ps1 -WorkspaceId "${{ secrets.PBI_WORKSPACE_PROD }}"
