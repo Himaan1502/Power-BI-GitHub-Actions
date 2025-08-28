@@ -7,7 +7,7 @@ on:
         required: true
         type: string
       workspace_id:
-        required: true
+        required: false   # 🔹 Make optional (we can fallback in deploy.ps1)
         type: string
     secrets:
       AZURE_TENANT_ID:
@@ -23,6 +23,7 @@ jobs:
   deploy:
     runs-on: windows-latest
     environment: ${{ inputs.environment }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -40,6 +41,7 @@ jobs:
         run: |
           ./deploy.ps1 `
             -WorkspaceId "${{ inputs.workspace_id }}" `
+            -Environment "${{ inputs.environment }}" `   # 🔹 explicitly pass Environment
             -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
             -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
             -ClientSecret ""   # OIDC login, no secret needed
