@@ -1,0 +1,31 @@
+name: Power BI CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # ✅ Manual trigger also enabled
+
+jobs:
+  deploy-dev:
+    uses: ./.github/workflows/deploy-template.yml
+    with:
+      environment: dev
+      workspace_id: ${{ vars.PBI_WORKSPACE_DEV }}
+    secrets: inherit
+
+  deploy-uat:
+    needs: deploy-dev
+    uses: ./.github/workflows/deploy-template.yml
+    with:
+      environment: uat
+      workspace_id: ${{ vars.PBI_WORKSPACE_UAT }}
+    secrets: inherit
+
+  deploy-prod:
+    needs: deploy-uat
+    uses: ./.github/workflows/deploy-template.yml
+    with:
+      environment: prod
+      workspace_id: ${{ vars.PBI_WORKSPACE_PROD }}
+    secrets: inherit
