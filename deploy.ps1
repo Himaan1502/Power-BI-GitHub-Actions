@@ -1,6 +1,6 @@
 param (
     [Parameter(Mandatory = $false)][string]$WorkspaceId,
-    [Parameter(Mandatory = $true)][string]$Environment,
+    [Parameter(Mandatory = $false)][string]$Environment,
     [Parameter(Mandatory = $true)][string]$TenantId,
     [Parameter(Mandatory = $true)][string]$ClientId,
     [Parameter(Mandatory = $false)][string]$ClientSecret
