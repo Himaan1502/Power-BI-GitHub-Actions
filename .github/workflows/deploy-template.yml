@@ -14,8 +14,6 @@ on:
         required: true
       AZURE_CLIENT_ID:
         required: true
-      AZURE_SUBSCRIPTION_ID:
-        required: true
 
 jobs:
   deploy:
@@ -31,7 +29,6 @@ jobs:
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy PBIX to ${{ inputs.environment }}
         run: |
@@ -39,4 +36,4 @@ jobs:
             -WorkspaceId "${{ inputs.workspace_id }}" `
             -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
             -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
-            -ClientSecret ""   # Not needed with OIDC, but param kept for compatibility
+            -ClientSecret ""   # OIDC login, secret not required
