@@ -15,6 +15,10 @@ on:
       AZURE_CLIENT_ID:
         required: true
 
+permissions:
+  id-token: write   # ✅ Needed for OIDC federated login
+  contents: read    # ✅ Required for checkout
+
 jobs:
   deploy:
     runs-on: windows-latest
@@ -32,9 +36,10 @@ jobs:
           allow-no-subscriptions: true
 
       - name: Deploy PBIX to ${{ inputs.environment }}
+        shell: pwsh
         run: |
-          pwsh ./deploy.ps1 `
+          ./deploy.ps1 `
             -WorkspaceId "${{ inputs.workspace_id }}" `
             -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
             -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
-            -ClientSecret ""   # OIDC login, secret not required
+            -ClientSecret ""   # OIDC login, no secret needed
