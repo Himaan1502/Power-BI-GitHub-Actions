@@ -7,7 +7,7 @@ on:
         required: true
         type: string
       workspace_id:
-        required: false   # 🔹 Make optional (we can fallback in deploy.ps1)
+        required: false   # 🔹 Optional (fallback handled in deploy.ps1)
         type: string
     secrets:
       AZURE_TENANT_ID:
@@ -28,7 +28,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # Authenticate with Azure using Federated Identity
+      # Authenticate with Azure using OIDC (no secrets needed beyond IDs)
       - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
@@ -36,13 +36,19 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
 
+      # Install Power BI PowerShell modules (needed for Connect-PowerBIServiceAccount etc.)
+      - name: Install Power BI Module
+        shell: pwsh
+        run: |
+          Install-Module -Name MicrosoftPowerBIMgmt -Scope CurrentUser -Force -AllowClobber
+
+      # Run deployment script
       - name: Deploy PBIX to ${{ inputs.environment }}
         shell: pwsh
         run: |
           pwsh -File "${{ github.workspace }}/deploy.ps1" `
-          -WorkspaceId "${{ inputs.workspace_id }}" `
-          -Environment "${{ inputs.environment }}" `
-          -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
-          -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
-          -ClientSecret ""
-
+            -WorkspaceId "${{ inputs.workspace_id }}" `
+            -Environment "${{ inputs.environment }}" `
+            -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
+            -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
+            -ClientSecret ""
