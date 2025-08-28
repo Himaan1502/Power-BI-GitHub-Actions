@@ -39,9 +39,10 @@ jobs:
       - name: Deploy PBIX to ${{ inputs.environment }}
         shell: pwsh
         run: |
-          ./deploy.ps1 `
-            -WorkspaceId "${{ inputs.workspace_id }}" `
-            -Environment "${{ inputs.environment }}" `   # 🔹 explicitly pass Environment
-            -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
-            -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
-            -ClientSecret ""   # OIDC login, no secret needed
+          pwsh -File "${{ github.workspace }}/deploy.ps1" `
+          -WorkspaceId "${{ inputs.workspace_id }}" `
+          -Environment "${{ inputs.environment }}" `
+          -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
+          -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
+          -ClientSecret ""
+
