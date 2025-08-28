@@ -3,7 +3,7 @@ name: Power BI CI/CD
 on:
   push:
     branches:
-      - main
+      - legacy
 
 jobs:
   deploy:
