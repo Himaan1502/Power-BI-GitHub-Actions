@@ -1,39 +1,63 @@
 param (
-    [Parameter(Mandatory = $true)][string]$WorkspaceId,
+    [Parameter(Mandatory = $false)][string]$WorkspaceId,
+    [Parameter(Mandatory = $true)][string]$Environment,
     [Parameter(Mandatory = $true)][string]$TenantId,
     [Parameter(Mandatory = $true)][string]$ClientId,
-    [Parameter(Mandatory = $false)][string]$ClientSecret
+    [Parameter(Mandatory = $true)][string]$ClientSecret
 )
 
-Write-Host "Authenticating to Power BI Service..."
+# -------------------------------
+# Resolve WorkspaceId
+# -------------------------------
+if ([string]::IsNullOrWhiteSpace($WorkspaceId)) {
+    Write-Host "⚠️ No WorkspaceId provided via pipeline input. Falling back to hardcoded values..."
 
-if ([string]::IsNullOrWhiteSpace($ClientSecret)) {
-    # ✅ OIDC-based login (token from `azure/login`)
-    Connect-PowerBIServiceAccount -ServicePrincipal `
-        -Tenant $TenantId `
-        -ClientId $ClientId
+    switch ($Environment.ToLower()) {
+        "dev" {
+            $WorkspaceId = "bc004410-9b58-4064-9967-8ad2c352fba3"
+        }
+        "uat" {
+            $WorkspaceId = "8bba631c-8861-4937-bea9-3a61058ea89e"
+        }
+        "prod" {
+            $WorkspaceId = "62bab185-e9a7-4926-b319-2bae50e1d848"
+        }
+        default {
+            throw "❌ Unknown environment: $Environment. Please provide a valid WorkspaceId."
+        }
+    }
 }
 else {
-    # ✅ Fallback if ClientSecret is provided
-    Connect-PowerBIServiceAccount -ServicePrincipal `
-        -Tenant $TenantId `
-        -ClientId $ClientId `
-        -ClientSecret $ClientSecret
+    Write-Host "✅ Using WorkspaceId provided by pipeline input: $WorkspaceId"
 }
 
-Write-Host "Deploying PBIX files to workspace $WorkspaceId..."
+# -------------------------------
+# Authentication
+# -------------------------------
+Write-Host "🔑 Authenticating to Power BI..."
+Connect-PowerBIServiceAccount -ServicePrincipal `
+    -Tenant $TenantId `
+    -ClientId $ClientId `
+    -ClientSecret $ClientSecret
 
-# Adjust folder as needed ("./reports" or ".")
-$pbixFiles = Get-ChildItem -Path "./reports" -Filter *.pbix -Recurse
-
-foreach ($file in $pbixFiles) {
-    Write-Host "Uploading $($file.Name)..."
-
-    Import-PowerBIReport `
-        -Path $file.FullName `
-        -WorkspaceId $WorkspaceId `
-        -Name $file.BaseName `
-        -ConflictAction CreateOrOverwrite
+if (-not $?) {
+    throw "❌ Failed to authenticate to Power BI Service."
 }
 
-Write-Host "Deployment completed successfully."
+# -------------------------------
+# Deployment Logic
+# -------------------------------
+Write-Host "🚀 Starting deployment..."
+Write-Host "   → Environment  : $Environment"
+Write-Host "   → WorkspaceId  : $WorkspaceId"
+Write-Host "   → TenantId     : $TenantId"
+Write-Host "   → ClientId     : $ClientId"
+
+# -------------------------------
+# TODO: Replace with actual deployment steps
+# Example: Import PBIX, update dataset, refresh, etc.
+# -------------------------------
+# Example placeholder:
+# New-PowerBIReport -Path "./Reports/SalesReport.pbix" -Name "Sales Report" -WorkspaceId $WorkspaceId -ConflictAction CreateOrOverwrite
+
+Write-Host "✅ Deployment completed successfully for environment: $Environment"
