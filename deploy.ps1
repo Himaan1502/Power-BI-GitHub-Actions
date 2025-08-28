@@ -2,14 +2,24 @@ param (
     [Parameter(Mandatory = $true)][string]$WorkspaceId,
     [Parameter(Mandatory = $true)][string]$TenantId,
     [Parameter(Mandatory = $true)][string]$ClientId,
-    [Parameter(Mandatory = $true)][string]$ClientSecret
+    [Parameter(Mandatory = $false)][string]$ClientSecret
 )
 
 Write-Host "Authenticating to Power BI Service..."
-Connect-PowerBIServiceAccount -ServicePrincipal `
-    -Tenant $TenantId `
-    -ClientId $ClientId `
-    -ClientSecret $ClientSecret
+
+if ([string]::IsNullOrWhiteSpace($ClientSecret)) {
+    # ✅ OIDC-based login (token from `azure/login`)
+    Connect-PowerBIServiceAccount -ServicePrincipal `
+        -Tenant $TenantId `
+        -ClientId $ClientId
+}
+else {
+    # ✅ Fallback if ClientSecret is provided
+    Connect-PowerBIServiceAccount -ServicePrincipal `
+        -Tenant $TenantId `
+        -ClientId $ClientId `
+        -ClientSecret $ClientSecret
+}
 
 Write-Host "Deploying PBIX files to workspace $WorkspaceId..."
 
