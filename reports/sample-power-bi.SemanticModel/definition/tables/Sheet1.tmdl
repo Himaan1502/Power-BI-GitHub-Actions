@@ -1,0 +1,74 @@
+table Sheet1
+	lineageTag: 0f3a5033-3369-4f24-b515-f0c41ee26685
+
+	column 'SR.'
+		dataType: int64
+		formatString: 0
+		lineageTag: e7ae0b86-553f-4a0d-9f97-02f680e7d39d
+		summarizeBy: sum
+		sourceColumn: SR.
+
+		annotation SummarizationSetBy = Automatic
+
+	column NAME
+		dataType: string
+		lineageTag: 24d816b3-7ade-4cb1-9aea-db14d621cd5b
+		summarizeBy: none
+		sourceColumn: NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column GENDER
+		dataType: string
+		lineageTag: 5fda3a35-605c-48b3-9bff-57a16d92b58a
+		summarizeBy: none
+		sourceColumn: GENDER
+
+		annotation SummarizationSetBy = Automatic
+
+	column AGE
+		dataType: int64
+		formatString: 0
+		lineageTag: e6a50bf1-228e-405b-bcb6-b42c36e180ee
+		summarizeBy: sum
+		sourceColumn: AGE
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'DATE '
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 9f8db00b-c22c-46c3-9ac3-688b4ffcab24
+		summarizeBy: none
+		sourceColumn: "DATE "
+
+		variation Variation
+			isDefault
+			relationship: 053bee0b-ef09-4093-bcb4-455cb228bf64
+			defaultHierarchy: LocalDateTable_f68b98ab-f63f-45f3-b8f5-55a7d89c114f.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column COUNTRY
+		dataType: string
+		lineageTag: 963cc2c3-cd5c-4190-9481-8f132c2c3b17
+		summarizeBy: none
+		sourceColumn: COUNTRY
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Sheet1 = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("C:\Users\CA\Downloads\Free_Test_Data_1MB_XLSX.xlsx"), null, true),
+				    Sheet1_Sheet = Source{[Item="Sheet1",Kind="Sheet"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(Sheet1_Sheet, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"SR.", Int64.Type}, {"NAME", type text}, {"GENDER", type text}, {"AGE", Int64.Type}, {"DATE ", type date}, {"COUNTRY", type text}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_ResultType = Table
+

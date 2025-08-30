@@ -1,0 +1,76 @@
+table 'Sheet1 (2)'
+	lineageTag: 74f0671f-e1ae-409f-a0a4-9290b4ca1939
+
+	column 'SR.'
+		dataType: int64
+		formatString: 0
+		lineageTag: cfe857b4-9dd7-4705-9fc0-f8f83da7eb86
+		summarizeBy: sum
+		sourceColumn: SR.
+
+		annotation SummarizationSetBy = Automatic
+
+	column NAME
+		dataType: string
+		lineageTag: b03b6986-73ca-4fd6-a2e0-91f1182e9419
+		summarizeBy: none
+		sourceColumn: NAME
+
+		annotation SummarizationSetBy = Automatic
+
+	column GENDER
+		dataType: string
+		lineageTag: 547dd8ef-b6b5-4a98-a51f-2359478f4ec6
+		summarizeBy: none
+		sourceColumn: GENDER
+
+		annotation SummarizationSetBy = Automatic
+
+	column AGE
+		dataType: int64
+		formatString: 0
+		lineageTag: 6378655f-1176-42ee-bda5-8f5f6698e6ca
+		summarizeBy: sum
+		sourceColumn: AGE
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'DATE '
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 2d8bf35d-1e80-4d71-838f-09f26919055c
+		summarizeBy: none
+		sourceColumn: "DATE "
+
+		variation Variation
+			isDefault
+			relationship: 014904df-b1e8-4eb6-85da-c5d9adaea412
+			defaultHierarchy: LocalDateTable_e22a6563-4c58-4730-86f5-a88c69889fcc.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column COUNTRY
+		dataType: string
+		lineageTag: c0d1f2df-f878-4c65-a6d5-2b575d7c0085
+		summarizeBy: none
+		sourceColumn: COUNTRY
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Sheet1 (2)' = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("C:\Users\CA\Downloads\Free_Test_Data_500KB_XLSX.xlsx"), null, true),
+				    Sheet1_Sheet = Source{[Item="Sheet1",Kind="Sheet"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(Sheet1_Sheet, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"SR.", Int64.Type}, {"NAME", type text}, {"GENDER", type text}, {"AGE", Int64.Type}, {"DATE ", type date}, {"COUNTRY", type text}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
