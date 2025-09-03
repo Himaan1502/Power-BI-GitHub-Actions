@@ -14,6 +14,9 @@ on:
         required: true
       AZURE_CLIENT_ID:
         required: true
+      # 🔹 Optional: Only if you ever want to support secret-based auth
+      AZURE_CLIENT_SECRET:
+        required: false
 
 permissions:
   id-token: write   # ✅ Needed for OIDC federated login
@@ -42,6 +45,14 @@ jobs:
         run: |
           Install-Module -Name MicrosoftPowerBIMgmt -Scope CurrentUser -Force -AllowClobber
 
+      # Get a Power BI access token using the OIDC identity
+      - name: Get Power BI Access Token
+        shell: bash
+        run: |
+          echo "PBI_ACCESS_TOKEN=$(az account get-access-token \
+            --resource https://analysis.windows.net/powerbi/api \
+            --query accessToken -o tsv)" >> $GITHUB_ENV
+
       # Run deployment script
       - name: Deploy PBIX to ${{ inputs.environment }}
         shell: pwsh
@@ -51,4 +62,5 @@ jobs:
             -Environment "${{ inputs.environment }}" `
             -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
             -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
-            -ClientSecret ""
+            -ClientSecret "${{ secrets.AZURE_CLIENT_SECRET || '' }}" `
+            -AccessToken $env:PBI_ACCESS_TOKEN
