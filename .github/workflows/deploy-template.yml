@@ -40,10 +40,10 @@ jobs:
           allow-no-subscriptions: true
 
       # Install Power BI PowerShell modules (needed for Connect-PowerBIServiceAccount etc.)
-      - name: Install Power BI Module
-        shell: pwsh
-        run: |
-          Install-Module -Name MicrosoftPowerBIMgmt -Scope CurrentUser -Force -AllowClobber
+      # - name: Install Power BI Module
+      #   shell: pwsh
+      #   run: |
+      #     Install-Module -Name MicrosoftPowerBIMgmt -Scope CurrentUser -Force -AllowClobber
 
       # Get a Power BI access token using the OIDC identity
       - name: Get Power BI Access Token
