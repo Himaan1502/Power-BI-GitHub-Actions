@@ -3,7 +3,8 @@ param (
     [Parameter(Mandatory = $false)][string]$Environment,
     [Parameter(Mandatory = $true)][string]$TenantId,
     [Parameter(Mandatory = $true)][string]$ClientId,
-    [Parameter(Mandatory = $false)][string]$ClientSecret
+    [Parameter(Mandatory = $false)][string]$ClientSecret,
+    [Parameter(Mandatory = $false)][string]$AccessToken   # 🔹 New param
 )
 
 # -------------------------------
@@ -38,7 +39,11 @@ Write-Host "🔑 Authenticating to Power BI..."
 Write-Host "Environment: $Environment"
 Write-Host "WorkspaceId: $WorkspaceId"
 
-if ([string]::IsNullOrWhiteSpace($ClientSecret)) {
+if (-not [string]::IsNullOrWhiteSpace($AccessToken)) {
+    Write-Host "Using OIDC AccessToken authentication..."
+    Connect-PowerBIServiceAccount -AccessToken $AccessToken
+}
+elseif ([string]::IsNullOrWhiteSpace($ClientSecret)) {
     Write-Host "Using OIDC authentication (no ClientSecret provided)..."
     Connect-PowerBIServiceAccount `
         -Tenant $TenantId `
