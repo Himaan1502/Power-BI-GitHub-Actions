@@ -3,8 +3,7 @@ param (
     [Parameter(Mandatory = $false)][string]$Environment,
     [Parameter(Mandatory = $true)][string]$TenantId,
     [Parameter(Mandatory = $true)][string]$ClientId,
-    [Parameter(Mandatory = $false)][string]$ClientSecret,
-    [Parameter(Mandatory = $false)][string]$AccessToken   # 🔹 New param
+    [Parameter(Mandatory = $true)][string]$ClientSecret
 )
 
 # -------------------------------
@@ -12,52 +11,33 @@ param (
 # -------------------------------
 if ([string]::IsNullOrWhiteSpace($WorkspaceId)) {
     Write-Host "No WorkspaceId provided via pipeline input. Falling back to hardcoded mapping..."
-
     switch ($Environment.ToLower()) {
-        "dev" {
-            $WorkspaceId = "bc004410-9b58-4064-9967-8ad2c352fba3"
-        }
-        "uat" {
-            $WorkspaceId = "8bba631c-8861-4937-bea9-3a61058ea89e"
-        }
-        "prod" {
-            $WorkspaceId = "62bab185-e9a7-4926-b319-2bae50e1d848"
-        }
-        default {
-            throw "Unknown environment: $Environment. Please provide a WorkspaceId."
-        }
+        "dev"  { $WorkspaceId = "bc004410-9b58-4064-9967-8ad2c352fba3" }
+        "uat"  { $WorkspaceId = "8bba631c-8861-4937-bea9-3a61058ea89e" }
+        "prod" { $WorkspaceId = "62bab185-e9a7-4926-b319-2bae50e1d848" }
+        default { throw "Unknown environment: $Environment. Please provide a WorkspaceId." }
     }
-}
-else {
+} else {
     Write-Host "Using WorkspaceId provided by pipeline input: $WorkspaceId"
 }
 
 # -------------------------------
-# Authentication
+# Authenticate with Power BI using Service Principal
 # -------------------------------
 Write-Host "🔑 Authenticating to Power BI..."
 Write-Host "Environment: $Environment"
 Write-Host "WorkspaceId: $WorkspaceId"
 
-if (-not [string]::IsNullOrWhiteSpace($AccessToken)) {
-    Write-Host "Using OIDC AccessToken authentication..."
-    Connect-PowerBIServiceAccount -AccessToken $AccessToken
-}
-elseif ([string]::IsNullOrWhiteSpace($ClientSecret)) {
-    Write-Host "Using OIDC authentication (no ClientSecret provided)..."
-    Connect-PowerBIServiceAccount `
-        -Tenant $TenantId `
-        -ClientId $ClientId
-}
-else {
-    Write-Host "Using Service Principal authentication (with ClientSecret)..."
-    Connect-PowerBIServiceAccount -ServicePrincipal `
-        -Tenant $TenantId `
-        -ClientId $ClientId `
-        -ClientSecret $ClientSecret
-}
+try {
+    $secureSecret = ConvertTo-SecureString $ClientSecret -AsPlainText -Force
+    $credential = New-Object System.Management.Automation.PSCredential($ClientId, $secureSecret)
 
-Write-Host "✅ Authenticated. Beginning deployment..."
+    Connect-PowerBIServiceAccount -ServicePrincipal -Credential $credential -TenantId $TenantId
+    Write-Host "✅ Successfully authenticated to Power BI"
+} catch {
+    Write-Error "❌ Authentication failed: $($_.Exception.Message)"
+    exit 1
+}
 
 # -------------------------------
 # Deployment logic
@@ -69,7 +49,6 @@ if (-not (Test-Path $pbixPath)) {
 }
 
 $pbixFiles = Get-ChildItem -Path $pbixPath -Filter *.pbix
-
 if ($pbixFiles.Count -eq 0) {
     throw "No PBIX files found in $pbixPath"
 }
@@ -77,25 +56,33 @@ if ($pbixFiles.Count -eq 0) {
 foreach ($pbix in $pbixFiles) {
     Write-Host "🚀 Deploying report: $($pbix.Name) to workspace $WorkspaceId"
 
-    # Import the PBIX into workspace (overwrite if already exists)
-    $import = New-PowerBIReport `
-        -Path $pbix.FullName `
-        -Name $pbix.BaseName `
-        -WorkspaceId $WorkspaceId `
-        -ConflictAction CreateOrOverwrite
+    try {
+        # Import the PBIX into workspace (overwrite if already exists)
+        $import = New-PowerBIReport `
+            -Path $pbix.FullName `
+            -Name $pbix.BaseName `
+            -WorkspaceId $WorkspaceId `
+            -ConflictAction CreateOrOverwrite
 
-    Write-Host "✅ Report deployed: $($import.Name)"
+        Write-Host "✅ Report deployed: $($import.Name)"
+    } catch {
+        Write-Warning "⚠ Failed to deploy report $($pbix.Name): $($_.Exception.Message)"
+        continue
+    }
 
     # Refresh dataset if exists
-    $dataset = Get-PowerBIDataset -WorkspaceId $WorkspaceId | Where-Object { $_.Name -eq $pbix.BaseName }
+    try {
+        $dataset = Get-PowerBIDataset -WorkspaceId $WorkspaceId | Where-Object { $_.Name -eq $pbix.BaseName }
 
-    if ($dataset) {
-        Write-Host "🔄 Triggering refresh for dataset: $($dataset.Name)"
-        Invoke-PowerBIDatasetRefresh -WorkspaceId $WorkspaceId -Id $dataset.Id -Wait
-        Write-Host "✅ Dataset refreshed: $($dataset.Name)"
-    }
-    else {
-        Write-Warning "⚠ No dataset found for report: $($pbix.BaseName)"
+        if ($dataset) {
+            Write-Host "🔄 Triggering refresh for dataset: $($dataset.Name)"
+            Invoke-PowerBIDatasetRefresh -WorkspaceId $WorkspaceId -Id $dataset.Id -Wait
+            Write-Host "✅ Dataset refreshed: $($dataset.Name)"
+        } else {
+            Write-Warning "⚠ No dataset found for report: $($pbix.BaseName)"
+        }
+    } catch {
+        Write-Warning "⚠ Dataset refresh failed for report $($pbix.BaseName): $($_.Exception.Message)"
     }
 }
 
