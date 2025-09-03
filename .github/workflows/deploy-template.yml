@@ -47,4 +47,4 @@ jobs:
             -Environment "${{ inputs.environment }}" `
             -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
             -ClientId "${{ secrets.AZURE_CLIENT_ID }}" `
-            -ClientSecret ""
+            -ClientSecret "${{ secrets.AZURE_CLIENT_SECRET }}"
