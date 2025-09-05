@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   load-vars:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       DEV: ${{ steps.vars.outputs.PBI_WORKSPACE_DEV }}
       UAT: ${{ steps.vars.outputs.PBI_WORKSPACE_UAT }}
