@@ -7,7 +7,7 @@ on:
         required: true
         type: string
       workspace_id:
-        required: false   # 🔹 Optional (fallback handled in deploy.ps1)
+        required: true
         type: string
     secrets:
       AZURE_TENANT_ID:
@@ -15,11 +15,11 @@ on:
       AZURE_CLIENT_ID:
         required: true
       AZURE_CLIENT_SECRET:
-        required: true  # now mandatory for SP auth
+        required: true
 
 permissions:
-  id-token: write   # ✅ Needed for OIDC federated login
-  contents: read    # ✅ Required for checkout
+  id-token: write
+  contents: read
 
 jobs:
   deploy:
@@ -30,7 +30,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # Authenticate with Azure using OIDC
       - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
@@ -38,7 +37,6 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
 
-      # Run deployment script using Service Principal
       - name: Deploy PBIX to ${{ inputs.environment }}
         shell: pwsh
         run: |
