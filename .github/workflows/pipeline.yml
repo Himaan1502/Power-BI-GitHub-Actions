@@ -4,32 +4,50 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # ✅ Manual trigger also enabled
+  workflow_dispatch:
 
 permissions:
-  id-token: write   # ✅ required for OIDC
-  contents: read    # ✅ required for checkout  
+  id-token: write
+  contents: read
 
 jobs:
+  load-vars:
+    runs-on: ubuntu-latest
+    outputs:
+      DEV: ${{ steps.vars.outputs.PBI_WORKSPACE_DEV }}
+      UAT: ${{ steps.vars.outputs.PBI_WORKSPACE_UAT }}
+      PROD: ${{ steps.vars.outputs.PBI_WORKSPACE_PROD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: vars
+        run: |
+          while IFS='=' read -r key value; do
+            if [[ ! "$key" =~ ^# && -n "$key" ]]; then
+              echo "$key=$value" >> $GITHUB_OUTPUT
+            fi
+          done < variables.txt
+
   deploy-dev:
+    needs: load-vars
     uses: ./.github/workflows/deploy-template.yml
     with:
       environment: dev
-      workspace_id: ${{ vars.PBI_WORKSPACE_DEV }}
+      workspace_id: ${{ needs.load-vars.outputs.DEV }}
     secrets: inherit
 
   deploy-uat:
-    needs: deploy-dev
+    needs: [deploy-dev, load-vars]
     uses: ./.github/workflows/deploy-template.yml
     with:
       environment: uat
-      workspace_id: ${{ vars.PBI_WORKSPACE_UAT }}
+      workspace_id: ${{ needs.load-vars.outputs.UAT }}
     secrets: inherit
 
   deploy-prod:
-    needs: deploy-uat
+    needs: [deploy-uat, load-vars]
     uses: ./.github/workflows/deploy-template.yml
     with:
       environment: prod
-      workspace_id: ${{ vars.PBI_WORKSPACE_PROD }}
+      workspace_id: ${{ needs.load-vars.outputs.PROD }}
     secrets: inherit
